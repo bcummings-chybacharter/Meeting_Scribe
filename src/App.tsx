@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality } from "@google/genai";
+// Fix: Module '"@google/genai"' has no exported member 'LiveSession'.
+import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 // AudioWorklet code as a string
 const audioWorkletCode = `
@@ -57,14 +58,14 @@ const App: React.FC = () => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [copiedState, setCopiedState] = useState<'transcription' | 'summary' | null>(null);
 
-    const sessionRef = useRef<Promise<LiveSession> | null>(null);
+    // Fix: Using `any` because `LiveSession` is not an exported type.
+    const sessionRef = useRef<any | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const audioWorkletURLRef = useRef<string | null>(null);
     const fullTranscriptionRef = useRef<string>('');
     const timerIntervalRef = useRef<number | null>(null);
-    const lastSpeakerIdRef = useRef<number | null>(null);
 
     const cleanupRecording = useCallback(() => {
         if (timerIntervalRef.current) {
@@ -103,7 +104,6 @@ const App: React.FC = () => {
         setTranscription('');
         setSummary('');
         fullTranscriptionRef.current = '';
-        lastSpeakerIdRef.current = null;
         setIsPaused(false);
         setIsRecording(true);
         setElapsedTime(0);
@@ -122,16 +122,12 @@ const App: React.FC = () => {
                     onopen: () => {
                        console.log('Connection opened');
                     },
+                    // Fix: Property 'speakerId' does not exist on type 'Transcription'. Removed usage of speakerId.
                     onmessage: (message: LiveServerMessage) => {
                         if (message.serverContent?.inputTranscription) {
-                            const { text, speakerId } = message.serverContent.inputTranscription;
+                            const { text } = message.serverContent.inputTranscription;
                             if(text) {
-                                let newTextSegment = '';
-                                if (speakerId && speakerId !== lastSpeakerIdRef.current) {
-                                    newTextSegment = `\n\n**Speaker ${speakerId}:** `;
-                                    lastSpeakerIdRef.current = speakerId;
-                                }
-                                newTextSegment += text;
+                                const newTextSegment = text;
                                 fullTranscriptionRef.current += newTextSegment;
                                 setTranscription(prev => prev + newTextSegment);
                             }
@@ -150,18 +146,13 @@ const App: React.FC = () => {
                         console.log('Connection closed');
                     },
                 },
+                // Fix: 'speakerDiarizationConfig' does not exist in type 'LiveConnectConfig'.
                 config: {
-                    // Fix: responseModalities must be [Modality.AUDIO] for Live API.
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
-                    // Fix: Use speakerDiarizationConfig and maxSpeakerCount.
-                    speakerDiarizationConfig: {
-                        maxSpeakerCount: 5,
-                    },
                 },
             });
 
-            // Fix: Cast window to any to support webkitAudioContext for older browsers.
             audioContextRef.current = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
             const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
 
