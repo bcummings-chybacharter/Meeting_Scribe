@@ -1,0 +1,7 @@
+{
+  "name": "Meeting Scribe & Summarizer",
+  "description": "Record meeting audio, get a real-time transcription, and generate a concise summary or case notes.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
