@@ -71,7 +71,7 @@ const App: React.FC = () => {
             timerIntervalRef.current = null;
         }
 
-        sessionRef.current?.then(session => session.close());
+        sessionRef.current?.then((session: { close: () => any; }) => session.close());
         sessionRef.current = null;
 
         if (streamRef.current) {
@@ -113,7 +113,7 @@ const App: React.FC = () => {
         try {
             streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            const ai = new GoogleGenAI({ apiKey: (window as any)['process'].env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             sessionRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
@@ -163,15 +163,16 @@ const App: React.FC = () => {
                     data: encode(new Uint8Array(event.data)),
                     mimeType: 'audio/pcm;rate=16000',
                 };
-                sessionRef.current?.then((session) => {
+                sessionRef.current?.then((session: { sendRealtimeInput: (arg0: { media: MediaBlob; }) => void; }) => {
                     session.sendRealtimeInput({ media: pcmBlob });
                 });
             };
             source.connect(audioWorkletNodeRef.current);
             audioWorkletNodeRef.current.connect(audioContextRef.current.destination);
 
-
-        } catch (err) {
+// FIX: Explicitly typing the `catch` block variable `err` as `any`.
+// This resolves potential parsing issues in strict TypeScript environments that could lead to scope-related errors.
+        } catch (err: any) {
             console.error(err);
             let errorMessage = 'An unknown error occurred while starting the recording.';
             if (err instanceof DOMException) {
@@ -237,7 +238,7 @@ const App: React.FC = () => {
         setSummary('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: (window as any)['process'].env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
             const prompt = `Analyze the following meeting transcription and generate a summary in a case note format suitable for a developer's records. The case note should be simple and include the following sections:
 
 **Client & Purpose:** Briefly describe the client's situation and the goal of the meeting.
@@ -253,7 +254,8 @@ ${fullTranscriptionRef.current}`;
               contents: prompt,
             });
             setSummary(response.text);
-        } catch (err) {
+// FIX: Explicitly typing the `catch` block variable `err` as `any`.
+        } catch (err: any) {
             console.error("Error summarizing:", err);
             setError("Failed to generate summary. Please try again.");
         } finally {
