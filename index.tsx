@@ -113,7 +113,7 @@ const App: React.FC = () => {
         try {
             streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: (window as any).process.env.API_KEY! });
             sessionRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
@@ -238,7 +238,7 @@ const App: React.FC = () => {
         setSummary('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: (window as any).process.env.API_KEY! });
             const prompt = `Analyze the following meeting transcription and generate a summary in a case note format suitable for a developer's records. The case note should be simple and include the following sections:
 
 **Client & Purpose:** Briefly describe the client's situation and the goal of the meeting.
