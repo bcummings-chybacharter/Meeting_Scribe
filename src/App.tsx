@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-// Fix: Module '"@google/genai"' has no exported member 'LiveSession'.
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 // AudioWorklet code as a string
@@ -58,7 +57,6 @@ const App: React.FC = () => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [copiedState, setCopiedState] = useState<'transcription' | 'summary' | null>(null);
 
-    // Fix: Using `any` because `LiveSession` is not an exported type.
     const sessionRef = useRef<any | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -115,14 +113,13 @@ const App: React.FC = () => {
         try {
             streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: (window as any)['process'].env.API_KEY! });
             sessionRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
                     onopen: () => {
                        console.log('Connection opened');
                     },
-                    // Fix: Property 'speakerId' does not exist on type 'Transcription'. Removed usage of speakerId.
                     onmessage: (message: LiveServerMessage) => {
                         if (message.serverContent?.inputTranscription) {
                             const { text } = message.serverContent.inputTranscription;
@@ -146,7 +143,6 @@ const App: React.FC = () => {
                         console.log('Connection closed');
                     },
                 },
-                // Fix: 'speakerDiarizationConfig' does not exist in type 'LiveConnectConfig'.
                 config: {
                     responseModalities: [Modality.AUDIO],
                     inputAudioTranscription: {},
@@ -178,15 +174,14 @@ const App: React.FC = () => {
         } catch (err) {
             console.error(err);
             let errorMessage = 'An unknown error occurred while starting the recording.';
-            // Check if the error is a DOMException from getUserMedia
             if (err instanceof DOMException) {
                 switch(err.name) {
                     case 'NotAllowedError':
-                    case 'PermissionDeniedError': // Firefox name
+                    case 'PermissionDeniedError': 
                         errorMessage = 'Microphone access was denied. To use this feature, please allow microphone access in your browser settings and refresh the page.';
                         break;
                     case 'NotFoundError':
-                    case 'DevicesNotFoundError': // Old name
+                    case 'DevicesNotFoundError': 
                         errorMessage = 'No microphone was found. Please connect a microphone and try again.';
                         break;
                     case 'NotReadableError':
@@ -242,7 +237,7 @@ const App: React.FC = () => {
         setSummary('');
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+            const ai = new GoogleGenAI({ apiKey: (window as any)['process'].env.API_KEY! });
             const prompt = `Analyze the following meeting transcription and generate a summary in a case note format suitable for a developer's records. The case note should be simple and include the following sections:
 
 **Client & Purpose:** Briefly describe the client's situation and the goal of the meeting.
